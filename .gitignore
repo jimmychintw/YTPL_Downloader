@@ -4,9 +4,30 @@ __pycache__/
 *$py.class
 *.so
 .Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual Environment
 venv/
 env/
 ENV/
+env.bak/
+venv.bak/
 .venv
 
 # IDE
@@ -16,22 +37,62 @@ ENV/
 *.swo
 *~
 
-# Project specific
-config.ini
-token.json
-client_secrets.json
-*.log
-
-# Downloaded videos (test data)
-Downloads/
-test_downloads/
-
 # macOS
 .DS_Store
 .AppleDouble
 .LSOverride
+Icon
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
 
-# Temporary files
+# YouTube API Credentials and Tokens
+client_secrets.json
+token.json
+
+# Downloaded Content
+YTPL_Videos/
+downloads/
+Downloads/
+test_downloads/
+*.mp4
+*.mkv
+*.webm
+*.m4a
+*.mp3
+*.vtt
+*.srt
+*.ass
+*.jpg
+*.jpeg
+*.png
+*.webp
+*.info.json
+
+# Config Files (personal)
+config.ini
+
+# Logs
+*.log
+logs/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Temp files
 *.tmp
 *.temp
 .cache/
+quick_test.py
