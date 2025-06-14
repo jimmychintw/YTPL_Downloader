@@ -1,0 +1,14 @@
+# YTPL_Downloader Dependencies
+
+# YouTube API and OAuth
+google-api-python-client>=2.100.0
+google-auth-httplib2>=0.1.0
+google-auth-oauthlib>=1.0.0
+
+# Video download (yt-dlp will be installed separately via brew or pip)
+# yt-dlp>=2024.1.0
+
+# Development tools (optional)
+# pytest>=7.4.0
+# black>=23.9.0
+# mypy>=1.5.0

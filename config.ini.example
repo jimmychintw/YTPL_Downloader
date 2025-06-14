@@ -1,0 +1,25 @@
+# YTPL_Downloader 配置檔範例
+# 請複製此檔案為 config.ini 並填入實際資訊
+
+[General]
+# OAuth 2.0 客戶端密鑰檔案的路徑，從 Google Cloud Console 下載的 JSON 檔案
+client_secrets_file = /path/to/your/client_secrets.json
+
+# 儲存用戶 OAuth 2.0 token 的檔案路徑。此檔案由 YTPL_Downloader 自動生成和管理
+token_storage_file = /path/to/your/token.json
+
+# YTPL_Downloader 內部在處理完所有 Playlist 後，會等待的時間（秒）
+check_interval_seconds = 60
+
+[Playlist_Example1]
+# 要監控的 YouTube Playlist 的完整 URL
+playlist_url = https://www.youtube.com/playlist?list=YOUR_PLAYLIST_ID_HERE
+
+# 該 Playlist 下載內容的絕對根儲存目錄路徑
+download_directory = /Users/youruser/Downloads/YTPL_Videos/Example1
+
+[Playlist_Example2]
+playlist_url = https://www.youtube.com/playlist?list=ANOTHER_PLAYLIST_ID_HERE
+download_directory = /Users/youruser/Downloads/YTPL_Videos/Example2
+
+# 可以添加更多 [Playlist_YourCustomName] 區塊
