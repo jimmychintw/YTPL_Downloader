@@ -132,10 +132,10 @@ class VideoDownloader:
             # 品質設定 - 最高解析度
             '--format', 'best[height<=?2160]',  # 最高 4K，避免超大檔案
             
-            # 音軌設定 - 所有可用音軌
+            # 字幕設定 - 只下載英文和中文字幕
             '--write-subs',           # 下載字幕
             '--write-auto-subs',      # 下載自動生成字幕
-            '--sub-langs', 'all',     # 所有語言字幕
+            '--sub-langs', 'en.*,zh.*',  # 只下載英文和中文系列字幕
             '--write-thumbnail',      # 下載縮圖
             
             # 元數據設定

@@ -251,9 +251,9 @@ class MainDownloader:
                 try:
                     # 為影片建立獨立資料夾
                     video_folder = self.file_manager.create_video_folder(
-                        base_path=Path(playlist_config.download_directory),
-                        video_id=video['video_id'],
-                        video_title=video['title']
+                        download_directory=playlist_config.download_directory,
+                        title=video['title'],
+                        video_id=video['video_id']
                     )
                     
                     # 建構影片 URL
