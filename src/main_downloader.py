@@ -34,6 +34,15 @@ class MainDownloader:
         self.youtube_api_client: YouTubeAPIClient = None
         self.video_downloader: VideoDownloader = None
         
+        # v1.2: 初始化統計數據
+        self.stats = {
+            "total_playlists": 0,
+            "success_downloads": 0,
+            "failed_downloads": 0,
+            "skipped_exists": 0,
+            "start_time": None
+        }
+        
         logger.info("MainDownloader 初始化開始")
     
     def initialize(self, config_file: str = "config.ini") -> bool:
@@ -131,6 +140,9 @@ class MainDownloader:
         cycle_start_time = datetime.now()
         logger.info("=== 主循環開始 ===")
         
+        # v1.2: 記錄開始時間
+        self.stats["start_time"] = cycle_start_time
+        
         # 初始化統計數據
         cycle_stats = {
             "start_time": cycle_start_time.isoformat(),
@@ -147,6 +159,9 @@ class MainDownloader:
         
         try:
             # 遍歷所有 Playlist
+            # v1.2: 更新 Playlist 總數
+            self.stats["total_playlists"] = len(self.config_parser.playlist_configs)
+            
             for playlist_config in self.config_parser.playlist_configs:
                 logger.info(f"開始處理 Playlist: {playlist_config.name}")
                 cycle_stats["playlists_processed"] += 1
@@ -235,10 +250,15 @@ class MainDownloader:
             
             if not new_videos:
                 logger.info(f"沒有新影片需要下載: {playlist_config.name}")
+                # v1.2: 更新跳過的影片數量
+                self.stats["skipped_exists"] += len(local_video_ids)
                 playlist_result["success"] = True
                 return playlist_result
             
             logger.info(f"🆕 發現 {len(new_videos)} 個新影片需要下載")
+            
+            # v1.2: 更新已存在（跳過）的影片數量
+            self.stats["skipped_exists"] += len(local_video_ids)
             
             # 4. 從已獲取的影片列表中直接建立映射（避免冗餘 API 調用）
             logger.info("🗺️  建立影片映射表...")
@@ -269,6 +289,8 @@ class MainDownloader:
                     
                     if download_success:
                         playlist_result["videos_downloaded"] += 1
+                        # v1.2: 更新成功下載統計
+                        self.stats["success_downloads"] += 1
                         logger.info(f"✅ 下載成功: {video['title']}")
                         
                         # 從雲端 Playlist 移除
@@ -296,9 +318,13 @@ class MainDownloader:
                         
                     else:
                         logger.error(f"❌ 下載失敗: {video['title']}")
+                        # v1.2: 更新失敗下載統計
+                        self.stats["failed_downloads"] += 1
                         
                 except Exception as e:
                     logger.error(f"處理影片時發生錯誤: {video['title']} - {e}")
+                    # v1.2: 處理錯誤也算失敗
+                    self.stats["failed_downloads"] += 1
                     continue
             
             # 計算耗時
@@ -369,13 +395,66 @@ class MainDownloader:
                 logger.error(f"持續運行模式中發生錯誤: {e}")
                 logger.info(f"⏳ 等待 {interval_minutes} 分鐘後重試...")
                 time.sleep(interval_minutes * 60)
+    
+    def _print_summary_report(self, log_file_path: str) -> None:
+        """
+        v1.2: 打印執行摘要報告
+        
+        Args:
+            log_file_path: 日誌檔案路徑
+        """
+        if self.stats["start_time"] is None:
+            return
+        
+        # 計算總耗時
+        end_time = datetime.now()
+        duration = end_time - self.stats["start_time"]
+        
+        # 格式化耗時
+        total_seconds = int(duration.total_seconds())
+        hours = total_seconds // 3600
+        minutes = (total_seconds % 3600) // 60
+        seconds = total_seconds % 60
+        
+        if hours > 0:
+            duration_str = f"{hours}h {minutes}m {seconds}s"
+        elif minutes > 0:
+            duration_str = f"{minutes}m {seconds}s"
+        else:
+            duration_str = f"{seconds}s"
+        
+        # 打印摘要報告
+        print("\n" + "=" * 50)
+        print("🏁 YTPL_Downloader 執行摘要")
+        print("=" * 50)
+        print(f"📂 處理的 Playlist 總數: {self.stats['total_playlists']}")
+        print(f"✅ 成功下載的影片: {self.stats['success_downloads']}")
+        print(f"⏭️  已存在而跳過的影片: {self.stats['skipped_exists']}")
+        print(f"❌ 下載失敗的影片: {self.stats['failed_downloads']}")
+        print(f"⏰ 總執行時間: {duration_str}")
+        print(f"📋 詳細日誌檔案: {log_file_path}")
+        print("=" * 50)
 
 
 def main():
     """主入口函數"""
-    # 設定日誌
-    setup_logger(level='INFO')
+    # 設定日誌 (v1.2: 雙通道輸出到控制台和日誌檔案)
+    from datetime import datetime
+    
+    # 創建 logs 目錄
+    log_dir = Path("logs")
+    log_dir.mkdir(exist_ok=True)
+    
+    # 生成帶時間戳的日誌檔名
+    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    log_file = log_dir / f"ytpl_downloader_{timestamp}.log"
+    
+    # 設定雙通道日誌
+    setup_logger(level='INFO', log_file=str(log_file), console_output=True)
     logger.info("🚀 YTPL_Downloader 啟動")
+    
+    # v1.2: 初始化下載器變數，以便在 finally 中使用
+    downloader = None
     
     try:
         # 創建主下載器
@@ -406,6 +485,10 @@ def main():
     except Exception as e:
         logger.error(f"程式執行中發生未預期錯誤: {e}")
         sys.exit(1)
+    finally:
+        # v1.2: 打印執行摘要報告
+        if downloader is not None:
+            downloader._print_summary_report(str(log_file))
 
 
 if __name__ == "__main__":

@@ -129,8 +129,9 @@ class VideoDownloader:
             # 輸出設定
             '--output', str(output_dir / '%(title)s.%(ext)s'),
             
-            # 品質設定 - 最高解析度
-            '--format', 'best[height<=?2160]',  # 最高 4K，避免超大檔案
+            # 品質設定 - 最高解析度 (v1.2 更新：確保最高品質視訊+音訊)
+            '--format', 'bestvideo*+bestaudio/best',  # 下載最佳視訊和音訊並合併
+            '--merge-output-format', 'mp4',  # 合併輸出格式統一為 mp4
             
             # 字幕設定 - 只下載英文和中文字幕
             '--write-subs',           # 下載字幕
@@ -157,6 +158,8 @@ class VideoDownloader:
             
             # 網路設定
             '--socket-timeout', '30', # Socket 超時 30 秒
+            '--http-chunk-size', '10485760',  # 10MB chunks for better speed
+            '--concurrent-fragments', '4',   # 並行下載片段
         ]
         
         logger.debug(f"建構 yt-dlp 命令: {' '.join(cmd)}")
@@ -228,13 +231,21 @@ class VideoDownloader:
                         self.progress.total_bytes * self.progress.percentage / 100
                     )
                 
-                # 記錄進度到日誌
-                if self.progress.percentage > 0:
-                    logger.debug(
-                        f"下載進度: {self.progress.percentage:.1f}% "
-                        f"({self.progress.downloaded_bytes}/{self.progress.total_bytes} bytes) "
-                        f"速度: {self.progress.speed_mbps:.2f} Mbps"
-                    )
+                # 記錄進度到日誌 (僅對主要檔案顯示，過濾小檔案避免刷屏)
+                if self.progress.percentage > 0 and self.progress.total_bytes > 1024 * 1024:  # 只顯示 > 1MB 的檔案
+                    # 格式化檔案大小顯示
+                    total_mb = self.progress.total_bytes / (1024 * 1024)
+                    downloaded_mb = self.progress.downloaded_bytes / (1024 * 1024)
+                    
+                    # 每 10% 顯示一次進度，避免刷屏
+                    progress_step = int(self.progress.percentage // 10) * 10
+                    if not hasattr(self, '_last_progress_shown') or self._last_progress_shown != progress_step:
+                        self._last_progress_shown = progress_step
+                        logger.info(
+                            f"📥 下載進度: {self.progress.percentage:.1f}% "
+                            f"({downloaded_mb:.1f}/{total_mb:.1f} MB) "
+                            f"速度: {self.progress.speed_mbps:.1f} Mbps"
+                        )
                     
             except (ValueError, AttributeError) as e:
                 logger.debug(f"解析進度行失敗: {line} - {e}")
